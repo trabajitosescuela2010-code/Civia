@@ -1,0 +1,1030 @@
+import base64
+from pathlib import Path
+import streamlit as st
+
+st.set_page_config(
+    page_title="CIVIA — Make Knowledge Matter",
+    page_icon="💧",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+
+def render_img_html(image_path: str, alt: str = "CIVIA image", circular: bool = True) -> str:
+    """Devuelve un <img> en base64 si existe el archivo, o un espacio reservado para imagen."""
+    p = Path(image_path)
+    radius = "50%" if circular else "14px"
+    if p.exists() and p.is_file():
+        suffix = p.suffix.lower().lstrip(".")
+        mime = "jpeg" if suffix == "jpg" else suffix or "png"
+        b64 = base64.b64encode(p.read_bytes()).decode("utf-8")
+        return (
+            f'<img src="data:image/{mime};base64,{b64}" alt="{alt}" '
+            f'style="width:74px; height:74px; object-fit:cover; border-radius:{radius}; '
+            f'border:2px solid rgba(255,255,255,0.35); background:#FFFFFF;" />'
+        )
+    return (
+        f'<div title="Coloca tu imagen en: {image_path}" '
+        f'style="width:74px; height:74px; border-radius:{radius}; '
+        f'border:2px dashed rgba(255,255,255,0.55); background:rgba(255,255,255,0.08); '
+        f'color:#CBE7F0; display:flex; flex-direction:column; align-items:center; '
+        f'justify-content:center; font-size:0.65rem; font-weight:700; text-align:center; '
+        f'line-height:1.15; padding:4px; flex-shrink:0;">'
+        f'<span>🖼️</span><span>IMG</span></div>'
+    )
+
+
+# --- ESTILOS CSS (DISEÑO CIVIA FIELD GUIDE) ---
+st.markdown(
+    """
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Lora:ital,wght@0,500;0,600;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    /* Ocultar elementos nativos de Streamlit */
+    #MainMenu, header, footer {visibility: hidden;}
+    [data-testid="stSidebar"] {display: none;}
+    .block-container {
+        padding-top: 0.8rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 1240px !important;
+    }
+
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #FFFFFF;
+        color: #000000;
+    }
+
+    /* Tipografías */
+    .brush-title {
+        font-family: 'Caveat Brush', cursive;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        line-height: 1.02;
+    }
+    .serif-italic {
+        font-family: 'Lora', serif;
+        font-style: italic;
+    }
+    .eyebrow {
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+    }
+    .creator-name {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        font-weight: 800 !important;
+        font-size: 0.96rem !important;
+        color: #000000 !important;
+        padding: 7px 0;
+        border-bottom: 1px solid #E2E8F0;
+        letter-spacing: -0.01em;
+    }
+
+    /* Barra superior azul marino */
+    .top-nav-banner {
+        background-color: #06374A;
+        padding: 0.9rem 1.8rem;
+        border-radius: 16px 16px 0 0;
+        border-bottom: 1px solid rgba(255,255,255,0.14);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #FFFFFF;
+    }
+
+    /* Botones generales -> texto negro */
+    .stButton > button {
+        border-radius: 50px !important;
+        font-weight: 700 !important;
+        font-size: 0.75rem !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        border: 1.5px solid #06374A !important;
+        transition: all 0.2s ease !important;
+    }
+    .stButton > button:hover {
+        background-color: #1EB8E8 !important;
+        color: #000000 !important;
+        border-color: #1EB8E8 !important;
+    }
+
+    /* Contenedores de sección en #06374A */
+    .navy-header-block {
+        background-color: #06374A;
+        color: #FFFFFF;
+        padding: 2.2rem 2.5rem 1.2rem 2.5rem;
+        border-radius: 22px 22px 0 0;
+    }
+
+    /* Tarjetas SDG 12 y SDG 6 en el Hero */
+    .sdg-showcase {
+        background-color: #06374A;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 22px;
+        padding: 1.4rem;
+        display: flex;
+        gap: 1.1rem;
+        justify-content: center;
+    }
+    .sdg-tile-white {
+        background: #FFFFFF;
+        border-radius: 14px;
+        padding: 0.75rem;
+        width: 50%;
+    }
+    .sdg-12-inner {
+        background: #BF8B2E;
+        color: #FFFFFF;
+        border-radius: 8px;
+        padding: 1.3rem 1rem;
+        height: 210px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .sdg-6-inner {
+        background: #26BDE2;
+        color: #FFFFFF;
+        border-radius: 8px;
+        padding: 1.3rem 1rem;
+        height: 210px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    /* Banners dobles Every Drop Matters / Rethink Consumption */
+    .banner-cyan {
+        background-color: #1EB8E8;
+        color: #000000;
+        border-radius: 18px;
+        padding: 2rem;
+        height: 100%;
+    }
+    .banner-gold {
+        background-color: #F7CA3E;
+        color: #000000;
+        border-radius: 18px;
+        padding: 2rem;
+        height: 100%;
+    }
+
+    /* Sección 2: The City (Irapuato) -> Texto negro */
+    .section-light {
+        background-color: #FFFFFF;
+        color: #000000;
+        border: 1px solid #DCE8EE;
+        border-radius: 22px;
+        padding: 2.8rem;
+        margin-bottom: 2.2rem;
+    }
+    .photo-frame {
+        background: #DDF2F8;
+        color: #000000;
+        border-radius: 18px;
+        padding: 1.2rem;
+        text-align: center;
+    }
+
+    /* Secciones temáticas SDG 6 y SDG 12 -> Texto negro */
+    .section-sdg6 {
+        background: linear-gradient(180deg, #F0F9FD 0%, #DEF1FA 100%);
+        color: #000000;
+        border-radius: 22px;
+        padding: 2.8rem;
+        margin-bottom: 2.2rem;
+    }
+    .section-sdg12 {
+        background: linear-gradient(180deg, #FEFBF0 0%, #F9EFCE 100%);
+        color: #000000;
+        border-radius: 22px;
+        padding: 2.8rem;
+        margin-bottom: 2.2rem;
+    }
+    .pill-bar-cyan {
+        border: 1.5px solid #169AC4;
+        background: #FFFFFF;
+        border-radius: 50px;
+        padding: 0.75rem 1.5rem;
+        margin: 1.2rem 0 1.6rem 0;
+        font-family: 'Caveat Brush', cursive;
+        font-size: 1.35rem;
+        color: #000000;
+    }
+    .pill-bar-gold {
+        border: 1.5px solid #B88614;
+        background: #FFFFFF;
+        border-radius: 50px;
+        padding: 0.75rem 1.5rem;
+        margin: 1.2rem 0 1.6rem 0;
+        font-family: 'Caveat Brush', cursive;
+        font-size: 1.35rem;
+        color: #000000;
+    }
+
+    /* Tarjetas blancas -> Todo texto en negro (#000000) */
+    .level-card {
+        background: #FFFFFF;
+        color: #000000;
+        border-radius: 16px;
+        padding: 1.4rem;
+        box-shadow: 0 8px 22px rgba(6, 55, 74, 0.05);
+        border: 1px solid #E2E8F0;
+        min-height: 295px;
+    }
+
+    /* Sección 6: Three Pillars */
+    .pillar-dark-card {
+        background-color: #06374A;
+        color: #FFFFFF;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-top: 0.8rem;
+    }
+
+    /* Sección 7: Play & Learn */
+    .score-sidebar-card {
+        background-color: #06374A;
+        color: #FFFFFF;
+        border-radius: 18px;
+        padding: 1.6rem;
+        margin-bottom: 1rem;
+    }
+    .quiz-main-card {
+        background-color: #FFFFFF;
+        color: #000000;
+        border-radius: 18px;
+        padding: 2.2rem;
+        box-shadow: 0 10px 28px rgba(6, 55, 74, 0.06);
+        border: 1px solid #E5EFF4;
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# --- ESTADO DE SESIÓN ---
+if "active_tab" not in st.session_state:
+    st.session_state.active_tab = "ALL"
+if "selected_pillar" not in st.session_state:
+    st.session_state.selected_pillar = "03 / ECONOMIC"
+if "score" not in st.session_state:
+    st.session_state.score = 0
+if "answered_ids" not in st.session_state:
+    st.session_state.answered_ids = set()
+if "game_mode" not in st.session_state:
+    st.session_state.game_mode = "01 / THE SUSTAINABILITY QUIZ"
+if "q_index" not in st.session_state:
+    st.session_state.q_index = 0
+if "last_feedback" not in st.session_state:
+    st.session_state.last_feedback = None
+
+TEAM_MEMBERS = [
+    "Lía Maldonado Álvarez de la Cadena",
+    "Mia Kristie Raygoza García",
+    "Carlos Jael Rocha Rueda",
+    "María José Ríos López",
+    "Alonso Jiang Chone Vázquez",
+    "Lia Nicole Villalobos Águilar",
+    "Alan Matías Campos Hernández",
+    "Aura Ailyn Zavala Vera",
+    "Luciano Araujo Pedroza",
+]
+
+# Cambia esta ruta por la de tu imagen (ej. "assets/civia_logo.png")
+TITLE_IMAGE_PATH = "assets/Logocivia.png"
+
+# --- BARRA DE NAVEGACIÓN SUPERIOR ---
+st.markdown(
+    """
+<div class="top-nav-banner">
+    <div style="display:flex; align-items:center; gap:10px;">
+        <span style="background:#FFFFFF; color:#000000; font-weight:900; padding:4px 9px; border-radius:50%; font-size:0.85rem;">C</span>
+        <span style="font-weight:800; font-size:1.15rem; letter-spacing:0.04em; color:#FFFFFF;">CIVIA<span style="color:#1EB8E8;">.</span></span>
+    </div>
+    <div style="font-size:0.75rem; color:#B7E4F2; letter-spacing:0.1em; font-weight:700;">
+        AN EDUCATIONAL FIELD GUIDE · IRAPUATO, GTO
+    </div>
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+nav_cols = st.columns(9)
+nav_items = [
+    ("ALL", "ALL GUIDE"),
+    ("CITY", "THE CITY"),
+    ("SDG06", "SDG 06"),
+    ("SDG12", "SDG 12"),
+    ("SCHOOL", "OUR SCHOOL"),
+    ("PILLARS", "3 PILLARS"),
+    ("PLAY", "PLAY & LEARN"),
+    ("ACTION", "TAKE ACTION"),
+    ("SOURCES", "SOURCES & TEAM"),
+]
+for col, (code, label) in zip(nav_cols, nav_items):
+    with col:
+        if st.button(label, key=f"nav_{code}", use_container_width=True):
+            st.session_state.active_tab = code
+
+tab = st.session_state.active_tab
+
+# ==============================================================================
+# 01 / HERO + BANNERS
+# ==============================================================================
+if tab in ["ALL"]:
+    title_img_html = render_img_html(TITLE_IMAGE_PATH, alt="assets/Logocivia.png", circular=True)
+
+    st.markdown(
+        f"""
+    <div class="navy-header-block">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.4rem;">
+            <span class="brush-title" style="color:#5BC8EB; font-size:1.05rem;">AN EDUCATIONAL FIELD GUIDE / SDG 06 + SDG 12</span>
+            <span style="font-size:0.72rem; font-weight:700; letter-spacing:0.12em; color:#F7CA3E;">01 — THE START</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:0.8rem;">
+            {title_img_html}
+            <div style="font-size:3.4rem; font-weight:900; letter-spacing:-0.02em; line-height:1; color:#FFFFFF;">CIVIA<span style="color:#1EB8E8;">.</span></div>
+        </div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    h_col1, h_col2 = st.columns([1.15, 1], gap="large")
+    with h_col1:
+        st.markdown(
+            """
+        <div style="background-color:#06374A; color:#FFFFFF; padding:1.4rem 1.8rem; border-radius:16px; margin-bottom:0.8rem;">
+            <div class="brush-title" style="font-size:3.4rem; color:#FFFFFF; margin-bottom:0.9rem;">
+                MAKE KNOWLEDGE<br>MATTER.
+            </div>
+            <p class="serif-italic" style="font-size:1.12rem; color:#E2F2F8; margin:0;">
+                Two global challenges. One local perspective. Countless opportunities to make a difference.
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+        b1, b2 = st.columns(2)
+        with b1:
+            if st.button("EXPLORE THE CHALLENGES ↗", key="hero_btn_1", use_container_width=True):
+                st.session_state.active_tab = "SDG06"
+                st.rerun()
+        with b2:
+            if st.button("PLAY & LEARN ↗", key="hero_btn_2", use_container_width=True):
+                st.session_state.active_tab = "PLAY"
+                st.rerun()
+
+    with h_col2:
+        st.markdown(
+            """
+        <div class="sdg-showcase">
+            <div class="sdg-tile-white">
+                <div class="sdg-12-inner">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:1.8rem; font-weight:900; color:#FFFFFF;">12</span>
+                        <span style="font-size:0.65rem; font-weight:800; line-height:1.1; color:#FFFFFF;">RESPONSIBLE<br>CONSUMPTION<br>AND PRODUCTION</span>
+                    </div>
+                    <div style="font-size:3.2rem; text-align:center; font-weight:800; color:#FFFFFF;">∞</div>
+                </div>
+            </div>
+            <div class="sdg-tile-white">
+                <div class="sdg-6-inner">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:1.8rem; font-weight:900; color:#FFFFFF;">6</span>
+                        <span style="font-size:0.65rem; font-weight:800; line-height:1.1; color:#FFFFFF;">CLEAN WATER<br>AND SANITATION</span>
+                    </div>
+                    <div style="font-size:3.2rem; text-align:center;">💧</div>
+                </div>
+            </div>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown(
+        """
+    <div style="background-color:#FFFFFF; color:#000000; padding:1.8rem 2.5rem 1rem 2.5rem; margin-top:1rem;">
+        <hr style="border-color:#E2E8F0; margin:0 0 1.6rem 0;">
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    q_col1, q_col2 = st.columns(2, gap="large")
+    with q_col1:
+        st.markdown(
+            """
+        <div style="background-color:#FFFFFF; color:#000000; padding:0.8rem 1.2rem; border-radius:12px;">
+            <p class="serif-italic" style="font-size:1.4rem; font-weight:600; color:#000000; margin:0;">
+                Knowing what sustainability means is not the same as practicing it.
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    with q_col2:
+        st.markdown(
+            """
+        <div style="background-color:#FFFFFF; color:#000000; padding:0.8rem 1.2rem; border-radius:12px;">
+            <p class="serif-italic" style="font-size:1.05rem; color:#000000; margin:0;">
+                Sustainability connects the resources we use, the people around us, and the choices we make. Global goals become meaningful when we ask what happens in our own city, cafeteria, and classroom.
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown('<div style="background-color:#FFFFFF; padding:1.2rem 1.5rem; border-radius:14px; margin-top:0.8rem;">', unsafe_allow_html=True)
+    card_c, card_g = st.columns(2, gap="large")
+    with card_c:
+        st.markdown(
+            """
+        <div class="banner-cyan">
+            <div class="eyebrow" style="color:#000000;">06 / CLEAN WATER AND SANITATION</div>
+            <div style="font-size:1.5rem; margin:0.3rem 0;">💧</div>
+            <div class="brush-title" style="font-size:2.4rem; margin:0.4rem 0; color:#000000;">EVERY DROP<br>MATTERS.</div>
+            <div class="eyebrow" style="margin-top:1rem; color:#000000;">EXPLORE SDG 06 ↗</div>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    with card_g:
+        st.markdown(
+            """
+        <div class="banner-gold">
+            <div class="eyebrow" style="color:#000000;">12 / RESPONSIBLE CONSUMPTION AND PRODUCTION</div>
+            <div style="font-size:1.5rem; margin:0.3rem 0;">♻️</div>
+            <div class="brush-title" style="font-size:2.4rem; margin:0.4rem 0; color:#000000;">RETHINK<br>CONSUMPTION.</div>
+            <div class="eyebrow" style="margin-top:1rem; color:#000000;">EXPLORE SDG 12 ↗</div>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown(
+        """
+    <div style="background-color:#FFFFFF; color:#000000; padding:1.2rem 2.5rem 2.4rem 2.5rem; margin-bottom:1.5rem;">
+        <div class="eyebrow" style="color:#000000;">FOLLOW THE QUESTION</div>
+        <div style="font-weight:800; font-size:0.95rem; letter-spacing:0.06em; color:#000000;">
+            GLOBAL &nbsp;<span style="color:#C48D14;">→</span>&nbsp; GUANAJUATO &nbsp;<span style="color:#C48D14;">→</span>&nbsp; IRAPUATO &nbsp;<span style="color:#C48D14;">→</span>&nbsp; OUR SCHOOL &nbsp;<span style="color:#C48D14;">→</span>&nbsp; ACTION
+        </div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+# ==============================================================================
+# 02 / THE CITY — LOCAL CONTEXT
+# ==============================================================================
+if tab in ["ALL", "CITY"]:
+    st.markdown('<div class="section-light">', unsafe_allow_html=True)
+    st.markdown('<div class="eyebrow" style="color:#000000;">02 / THE CITY — LOCAL CONTEXT</div>', unsafe_allow_html=True)
+    st.markdown('<div class="brush-title" style="font-size:2.3rem; color:#000000; margin-bottom:1.5rem;">IRAPUATO,<br>GUANAJUATO.</div>', unsafe_allow_html=True)
+
+    c_img, c_txt = st.columns([1, 1.1], gap="large")
+    with c_img:
+        st.markdown('<div class="photo-frame">', unsafe_allow_html=True)
+        st.image("assets/Irapuatozona.png",use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown('<p style="font-size:0.78rem; color:#000000; margin-top:0.5rem;">Illustrative water photograph; see municipal sources below for local information.</p>', unsafe_allow_html=True)
+
+    with c_txt:
+        st.markdown(
+            """
+        <p class="serif-italic" style="font-size:1.25rem; color:#000000; line-height:1.45;">
+            In Irapuato, the questions behind SDG 6 and SDG 12 are close to everyday life: how water is managed, what we consume, and where our waste goes.
+        </p>
+        <hr style="border-color:#DCE8EE; margin:1.2rem 0;">
+        <div class="eyebrow" style="color:#000000;">SDG 06 / WATER</div>
+        <p style="font-size:0.95rem; color:#000000; line-height:1.6;">
+            Irapuato relies on groundwater. Its municipal development plan describes pressure on the Irapuato–Valle aquifer. Household, agricultural, and industrial needs make careful management and responsible consumption important. This does not mean every neighborhood has the same supply conditions.
+        </p>
+        <hr style="border-color:#DCE8EE; margin:1.2rem 0;">
+        <div class="eyebrow" style="color:#000000;">SDG 12 / MATERIALS</div>
+        <p style="font-size:0.95rem; color:#000000; line-height:1.6;">
+            Waste separation, reuse, and smarter purchasing can reduce pressure on disposal systems. Irapuato opened Eco Centros at Plaza San Roque and Parque Ecológico de Irapuato in February 2025. Their launch does not, by itself, establish a measured diversion rate.
+        </p>
+        <div style="margin-top:1rem; font-weight:800; font-size:0.8rem; letter-spacing:0.08em; color:#000000; border-bottom:2px solid #000000; display:inline-block; padding-bottom:3px;">
+            CHECK THE LOCAL SOURCES ↗
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ==============================================================================
+# 03 / SDG 06 — CLEAN WATER AND SANITATION
+# ==============================================================================
+if tab in ["ALL", "SDG06"]:
+    st.markdown('<div class="section-sdg6">', unsafe_allow_html=True)
+    st.markdown('<div class="eyebrow" style="color:#000000;">03 / SDG 06 — CLEAN WATER AND SANITATION</div>', unsafe_allow_html=True)
+    st.markdown('<div class="brush-title" style="font-size:2.3rem; color:#000000;">EVERY DROP<br>HAS A STORY.</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="serif-italic" style="font-size:1.1rem; color:#000000; max-width:680px;">Clean water and safe sanitation support health, learning, and livelihoods. SDG 6 asks us to protect water resources, improve access, and use water responsibly.</p>',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="pill-bar-cyan">💧 &nbsp; Explore SDG 6</div>', unsafe_allow_html=True)
+
+    cols_6 = st.columns(4, gap="medium")
+    cards_6 = [
+        ("🌐", "01 / GLOBAL PERSPECTIVE", "2.1 billion", "people lacked safely managed drinking water services.", "Year: 2024 · Scope: Global · Source: WHO/UNICEF Joint Monitoring Programme, 2025 update; UN SDG 6."),
+        ("🗺️", "02 / GUANAJUATO", None, "A shared resource", "Water is essential for our daily lives. In Guanajuato, it is important to take care of our water sources and avoid wasting water so that everyone has access to clean water, both now and in the future."),
+        ("📍", "03 / CHALLENGES", None, "Challenges in Irapuato", "Did you know that a large amount of water in Irapuato is lost through leaking pipes? Water waste at home, at school, and in public spaces can also make this problem worse. Small actions, such as reporting leaks and turning off the tap, can help protect our city's water supply."),
+        ("🏫", "04 / OUR SCHOOL", None, "Observe first", "Drinking fountains and school events, such as Children's Day, provide opportunities to observe water-use habits. Activities like inflatable water slides and water games can lead to excessive water consumption and waste. School water-use measurements have not yet been collected."),
+    ]
+    for col, (icon, tag, stat, heading, body) in zip(cols_6, cards_6):
+        with col:
+            if stat:
+                st.markdown(
+                    f"""
+                <div class="level-card">
+                    <div style="background:#E1F4FB; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:0.8rem;">{icon}</div>
+                    <div class="eyebrow" style="color:#000000;">{tag}</div>
+                    <div style="font-size:2rem; font-weight:800; color:#000000; margin:0.4rem 0;">{stat}</div>
+                    <p style="font-size:0.88rem; color:#000000; font-weight:600;">{heading}</p>
+                    <p style="font-size:0.72rem; color:#000000; margin-top:1rem;">{body}</p>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    f"""
+                <div class="level-card">
+                    <div style="background:#E1F4FB; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:0.8rem;">{icon}</div>
+                    <div class="eyebrow" style="color:#000000;">{tag}</div>
+                    <div style="font-weight:800; font-size:0.95rem; color:#000000; margin:0.4rem 0;">{heading}</div>
+                    <p style="font-size:0.82rem; color:#000000; line-height:1.5;">{body}</p>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+
+    st.markdown("<hr style='border-color:rgba(0,0,0,0.15); margin:1.8rem 0;'>", unsafe_allow_html=True)
+    f1, f2, f3 = st.columns(3, gap="large")
+    with f1:
+        st.markdown('<div class="eyebrow" style="color:#000000;">THE PROBLEM</div><p style="font-size:0.88rem; color:#000000;">Overuse, pollution, and insufficient treatment can affect availability and quality.</p>', unsafe_allow_html=True)
+    with f2:
+        st.markdown('<div class="eyebrow" style="color:#000000;">WHY IT MATTERS</div><p style="font-size:0.88rem; color:#000000;">Environmental: stressed ecosystems. Social: unequal access and health risks. Economic: greater costs of supply and treatment.</p>', unsafe_allow_html=True)
+    with f3:
+        st.markdown('<div class="eyebrow" style="color:#000000;">WHAT HELPS</div><p style="font-size:0.88rem; color:#000000;">Individual: close taps. School: report leaks and plan low-water celebrations. Community: support sound water management and sanitation.</p>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ==============================================================================
+# 04 / SDG 12 — RESPONSIBLE CONSUMPTION AND PRODUCTION
+# ==============================================================================
+if tab in ["ALL", "SDG12"]:
+    st.markdown('<div class="section-sdg12">', unsafe_allow_html=True)
+    st.markdown('<div class="eyebrow" style="color:#000000;">04 / SDG 12 — RESPONSIBLE CONSUMPTION AND PRODUCTION</div>', unsafe_allow_html=True)
+    st.markdown('<div class="brush-title" style="font-size:2.3rem; color:#000000;">WHAT WE THROW AWAY<br>DOESN\'T JUST DISAPPEAR.</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="serif-italic" style="font-size:1.1rem; color:#000000; max-width:680px;">From production to purchase to disposal, every product uses materials and energy. SDG 12 calls for less waste, thoughtful purchasing, reuse, and production that uses resources more wisely.</p>',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="pill-bar-gold">♻️ &nbsp; Explore SDG 12</div>', unsafe_allow_html=True)
+
+    cols_12 = st.columns(4, gap="medium")
+    cards_12 = [
+        ("🌐", "01 / GLOBAL PERSPECTIVE", "1.05 billion tonnes", "of food waste were generated.", "Year: 2022 · Scope: Global · Source: UNEP, Food Waste Index Report 2024."),
+        ("🗺️", "02 / GUANAJUATO", None, "Where does our waste go?", "Recycling starts with separating our waste correctly. In Guanajuato, recycling and waste collection depend on the facilities and services available in each community."),
+        ("♻️", "03 / IRAPUATO", None, "Give your waste a second life", "Did you know that Irapuato announced its first two Eco Centros on February 17, 2025? These spaces encourage recycling and responsible consumption. Before visiting, check which materials they accept."),
+        ("🏫", "04 / OUR SCHOOL", None, "How much do we waste?", "Food leftovers, plastic packaging, and wrappers are some of the waste we can observe at our school. Measuring how much we throw away could help us understand our impact and find ways to reduce it. School waste measurements have not yet been collected."),
+    ]
+    for col, (icon, tag, stat, heading, body) in zip(cols_12, cards_12):
+        with col:
+            if stat:
+                st.markdown(
+                    f"""
+                <div class="level-card">
+                    <div style="background:#FDF2D0; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:0.8rem;">{icon}</div>
+                    <div class="eyebrow" style="color:#000000;">{tag}</div>
+                    <div style="font-size:2rem; font-weight:800; color:#000000; margin:0.4rem 0; line-height:1.05;">{stat}</div>
+                    <p style="font-size:0.88rem; color:#000000; font-weight:600;">{heading}</p>
+                    <p style="font-size:0.72rem; color:#000000; margin-top:1rem;">{body}</p>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    f"""
+                <div class="level-card">
+                    <div style="background:#FDF2D0; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:0.8rem;">{icon}</div>
+                    <div class="eyebrow" style="color:#000000;">{tag}</div>
+                    <div style="font-weight:800; font-size:0.95rem; color:#000000; margin:0.4rem 0;">{heading}</div>
+                    <p style="font-size:0.82rem; color:#000000; line-height:1.5;">{body}</p>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+
+    st.markdown("<hr style='border-color:rgba(0,0,0,0.15); margin:1.8rem 0;'>", unsafe_allow_html=True)
+    g1, g2, g3 = st.columns(3, gap="large")
+    with g1:
+        st.markdown('<div class="eyebrow" style="color:#000000;">THE PROBLEM</div><p style="font-size:0.88rem; color:#000000;">Food waste, disposable packaging, and mixed waste use resources and complicate recovery.</p>', unsafe_allow_html=True)
+    with g2:
+        st.markdown('<div class="eyebrow" style="color:#000000;">WHY IT MATTERS</div><p style="font-size:0.88rem; color:#000000;">Environmental: resource loss and pollution. Social: shared responsibility. Economic: wasted food, materials, and money.</p>', unsafe_allow_html=True)
+    with g3:
+        st.markdown('<div class="eyebrow" style="color:#000000;">WHAT HELPS</div><p style="font-size:0.88rem; color:#000000;">Individual: buy only what you need. School: reuse and separate correctly. Community: support appropriate local collection and repair.</p>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ==============================================================================
+# 05 / OUR SCHOOL — INITIAL OBSERVATIONS
+# ==============================================================================
+if tab in ["ALL", "SCHOOL"]:
+    st.markdown(
+        """
+    <div style="background-color:#FFFFFF; color:#000000; padding:2.4rem 2.5rem 1.2rem 2.5rem; border-radius:22px 22px 0 0;">
+        <div class="eyebrow" style="color:#000000;">05 / OUR SCHOOL — INITIAL OBSERVATIONS</div>
+        <div class="brush-title" style="font-size:2.3rem; color:#000000;">DO WE PRACTICE<br>WHAT WE KNOW?</div>
+        <p class="serif-italic" style="font-size:1.1rem; color:#000000; max-width:720px; margin:0.8rem 0 0 0;">
+            These are starting observations and examples, not survey results or statistically representative findings. We need real school data before making numerical claims.
+        </p>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('<div style="background-color:#FFFFFF; padding:0.8rem 1.8rem;">', unsafe_allow_html=True)
+    s1, s2 = st.columns(2, gap="large")
+    with s1:
+        st.markdown(
+            """
+        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:16px; padding:1.6rem; min-height:220px; color:#000000;">
+            <div style="font-size:1.3rem; margin-bottom:0.4rem;">💧</div>
+            <div class="eyebrow" style="color:#000000;">WATER / SDG 06</div>
+            <div style="font-weight:800; font-size:1.05rem; margin:0.4rem 0; color:#000000;">Can we have fun without wasting water?</div>
+            <p style="font-size:0.9rem; color:#000000; line-height:1.55;">
+                At our school, celebrations like Children's Day and Student Day sometimes include water slides, water games, and water fights. Although these activities are fun, they can waste a lot of water. We can enjoy our celebrations while also taking care of this valuable resource.
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    with s2:
+        st.markdown(
+            """
+        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:16px; padding:1.6rem; min-height:220px; color:#000000;">
+            <div style="font-size:1.3rem; margin-bottom:0.4rem;">♻️</div>
+            <div class="eyebrow" style="color:#000000;">CONSUMPTION / SDG 12</div>
+            <div style="font-weight:800; font-size:1.05rem; margin:0.4rem 0; color:#000000;">Think before you throw it away!</div>
+            <p style="font-size:0.9rem; color:#000000; line-height:1.55;">
+                Have you ever noticed how much trash is left after lunch? Disposable packaging, food leftovers, and even entire meals are sometimes thrown away at our school. Although waste separation has been attempted, it has not become a consistent habit. Small changes in our daily actions can make a big difference.
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown(
+        """
+    <div style="background-color:#FFFFFF; color:#000000; padding:0.5rem 2.5rem;">
+        <hr style="border-color:#E2E8F0; margin:0.8rem 0 1.2rem 0;">
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('<div style="background-color:#FFFFFF; padding:0.4rem 1.8rem 2rem 1.8rem; border-radius:0 0 22px 22px; margin-bottom:2rem;">', unsafe_allow_html=True)
+    b_left, b_right = st.columns([1.1, 1], gap="large")
+    with b_left:
+        st.markdown(
+            """
+        <div style="background-color:#FFFFFF; color:#000000; padding:0.6rem 0.4rem;">
+            <div class="eyebrow" style="color:#000000;">QUESTIONS WORTH ASKING</div>
+            <p style="font-size:1.05rem; font-weight:700; color:#000000; line-height:1.5; margin:0;">
+                Which habits could change without making school less enjoyable? Who needs to be involved? What would we measure before claiming progress?
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    with b_right:
+        st.markdown(
+            """
+        <div style="border:1.5px dashed #94A3B8; background-color:#FFFFFF; border-radius:14px; padding:1.3rem 1.5rem; color:#000000;">
+            <div class="eyebrow" style="color:#000000;">SPACE FOR REAL SCHOOL DATA</div>
+            <p style="font-size:0.86rem; color:#000000; margin:0; line-height:1.6;">
+                Future water audit: not yet collected.<br>
+                Future cafeteria waste audit: not yet collected.<br>
+                Record dates, methods, and sources when data becomes available.
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ==============================================================================
+# 06 / THE THREE PILLARS
+# ==============================================================================
+if tab in ["ALL", "PILLARS"]:
+    st.markdown('<div class="section-light">', unsafe_allow_html=True)
+    st.markdown('<div class="eyebrow" style="color:#000000;">06 / THE THREE PILLARS</div>', unsafe_allow_html=True)
+    st.markdown('<div class="brush-title" style="font-size:2.3rem; color:#000000;">THREE WAYS<br>TO SEE THE WHOLE.</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p style="font-size:1rem; color:#000000; max-width:540px; margin-bottom:1.4rem;">Sustainability is environmental, social, and economic. Select a pillar to see what it means for water and consumption.</p>',
+        unsafe_allow_html=True,
+    )
+
+    p1, p2, p3 = st.columns(3, gap="medium")
+    with p1:
+        if st.button("01 / ENVIRONMENTAL ↗", key="pil_env", use_container_width=True):
+            st.session_state.selected_pillar = "01 / ENVIRONMENTAL"
+    with p2:
+        if st.button("02 / SOCIAL ↗", key="pil_soc", use_container_width=True):
+            st.session_state.selected_pillar = "02 / SOCIAL"
+    with p3:
+        if st.button("03 / ECONOMIC ↗", key="pil_eco", use_container_width=True):
+            st.session_state.selected_pillar = "03 / ECONOMIC"
+
+    pillars_content = {
+        "01 / ENVIRONMENTAL": (
+            "Protect ecosystems and natural cycles.",
+            "Protects water sources, aquifers, and natural materials by cutting pollution, preventing overuse, and reusing items (SDG 6 & SDG 12).",
+        ),
+        "02 / SOCIAL": (
+            "Build fair, healthy, and shared habits.",
+            "Promotes equitable access to clean water, good hygiene, and shared community responsibility across students, teachers, and families.",
+        ),
+        "03 / ECONOMIC": (
+            "Use resources with intention.",
+            "Use resources efficiently and reduce unnecessary costs: prevent water waste and costly leaks (SDG 6), and avoid unnecessary packaging and discarded food (SDG 12).",
+        ),
+    }
+    p_title, p_desc = pillars_content[st.session_state.selected_pillar]
+    st.markdown(
+        f"""
+    <div class="pillar-dark-card">
+        <div class="eyebrow" style="color:#5BC8EB;">{st.session_state.selected_pillar}</div>
+        <div style="font-weight:800; font-size:1.1rem; margin:0.4rem 0; color:#FFFFFF;">{p_title}</div>
+        <p style="font-size:0.95rem; color:#E2F2F8; margin:0; line-height:1.55;">{p_desc}</p>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ==============================================================================
+# 07 / PLAY & LEARN
+# ==============================================================================
+if tab in ["ALL", "PLAY"]:
+    st.markdown('<div class="section-sdg6">', unsafe_allow_html=True)
+    st.markdown('<div class="brush-title" style="font-size:2.4rem; color:#000000;">PLAY & LEARN.</div>', unsafe_allow_html=True)
+    st.markdown('<p class="serif-italic" style="font-size:1.15rem; color:#000000; margin-bottom:1.5rem;">Think. Choose. Learn. Try again.</p>', unsafe_allow_html=True)
+
+    preguntas_quiz = [
+        {
+            "id": "q1",
+            "pregunta": "What does SDG 6 focus on?",
+            "opciones": ["A. Affordable energy", "B. Clean water and sanitation", "C. Sustainable cities", "D. Climate action"],
+            "respuesta": "B. Clean water and sanitation",
+            "explicacion": "SDG 6 focuses on clean drinking water, sanitation, hygiene, and protecting water sources.",
+        },
+        {
+            "id": "q2",
+            "pregunta": "How much global food waste was reported for 2022 by UNEP?",
+            "opciones": ["A. 50 million tonnes", "B. 10 billion tonnes", "C. 1.05 billion tonnes", "D. 250 million tonnes"],
+            "respuesta": "C. 1.05 billion tonnes",
+            "explicacion": "UNEP's Food Waste Index Report 2024 reported 1.05 billion tonnes of food waste in 2022.",
+        },
+        {
+            "id": "q3",
+            "pregunta": "Which aquifer supplies groundwater to Irapuato?",
+            "opciones": ["A. Lerma–Chapala", "B. Irapuato–Valle aquifer", "C. Silao–Romita", "D. Río Grande"],
+            "respuesta": "B. Irapuato–Valle aquifer",
+            "explicacion": "Irapuato relies on groundwater from the Irapuato–Valle aquifer.",
+        },
+        {
+            "id": "q4",
+            "pregunta": "When did Irapuato announce its first two Eco Centros?",
+            "opciones": ["A. February 2025", "B. January 2020", "C. August 2023", "D. December 2021"],
+            "respuesta": "A. February 2025",
+            "explicacion": "Irapuato launched Eco Centros at Plaza San Roque and Parque Ecológico in February 2025.",
+        },
+    ]
+
+    preguntas_tf = [
+        {
+            "id": "tf1",
+            "pregunta": "Myth or Fact: Reporting a leaking pipe at school helps save water.",
+            "opciones": ["A. Fact (True)", "B. Myth (False)"],
+            "respuesta": "A. Fact (True)",
+            "explicacion": "Spotting and fixing leaks early stops ongoing water loss.",
+        },
+        {
+            "id": "tf2",
+            "pregunta": "Myth or Fact: School water and waste measurements have already been finished here.",
+            "opciones": ["A. Fact (True)", "B. Myth (False)"],
+            "respuesta": "B. Myth (False)",
+            "explicacion": "Those school measurements have not been collected yet — transparency first!",
+        },
+    ]
+
+    bank = preguntas_quiz if st.session_state.game_mode == "01 / THE SUSTAINABILITY QUIZ" else preguntas_tf
+    idx = st.session_state.q_index % len(bank)
+    current_q = bank[idx]
+
+    g_left, g_right = st.columns([1, 2.3], gap="large")
+
+    with g_left:
+        total_q = len(preguntas_quiz) + len(preguntas_tf)
+        completed = len(st.session_state.answered_ids)
+        badge_1 = "🟢" if completed >= 1 else "⚪"
+        badge_2 = "🟡" if completed >= 3 else "⚪"
+        badge_3 = "🔵" if completed >= 5 else "⚪"
+
+        st.markdown(
+            f"""
+        <div class="score-sidebar-card">
+            <div class="eyebrow" style="color:#5BC8EB;">CIVIA IMPACT SCORE</div>
+            <div style="font-size:3rem; font-weight:800; line-height:1.1; margin:0.3rem 0; color:#FFFFFF;">{st.session_state.score}</div>
+            <div style="font-size:0.85rem; color:#E2F2F8; margin-bottom:1rem;">educational points</div>
+            <div style="font-weight:700; font-size:0.88rem; margin-bottom:0.8rem; color:#FFFFFF;">{completed} of {total_q} challenges completed</div>
+            <hr style="border-color:rgba(255,255,255,0.18); margin:1rem 0;">
+            <div class="eyebrow" style="color:#F7CA3E;">ACHIEVEMENTS</div>
+            <div style="font-size:0.78rem; line-height:1.8; margin-top:0.4rem; color:#FFFFFF;">
+                {badge_1} WATER GUARDIAN<br>
+                {badge_2} WASTE RE-THINKER<br>
+                {badge_3} SUSTAINABILITY EXPLORER
+            </div>
+            <p style="font-size:0.72rem; color:#B7E4F2; margin-top:1rem; line-height:1.4;">
+                Points represent educational progress, not actual liters of water saved or kilograms of waste reduced.
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+        if st.button("01 / THE SUSTAINABILITY QUIZ", key="mode_quiz", use_container_width=True):
+            st.session_state.game_mode = "01 / THE SUSTAINABILITY QUIZ"
+            st.session_state.q_index = 0
+            st.session_state.last_feedback = None
+            st.rerun()
+
+        if st.button("02 / MYTH OR FACT?", key="mode_tf", use_container_width=True):
+            st.session_state.game_mode = "02 / MYTH OR FACT?"
+            st.session_state.q_index = 0
+            st.session_state.last_feedback = None
+            st.rerun()
+
+    with g_right:
+        st.markdown(
+            f"""
+        <div class="quiz-main-card">
+            <div class="eyebrow" style="color:#000000;">QUESTION {idx + 1} / {len(bank)}</div>
+            <div style="font-weight:800; font-size:1.1rem; color:#000000;">HOW SUSTAINABLE ARE YOUR DECISIONS?</div>
+            <p style="font-size:0.9rem; color:#000000; margin-bottom:1rem;">Test your knowledge about water, consumption, and sustainability.</p>
+            <div style="font-size:0.75rem; font-weight:800; letter-spacing:0.1em; color:#000000; margin-bottom:1rem;">
+                SCORE {st.session_state.score} &nbsp;&nbsp; QUESTION {idx + 1} OF {len(bank)}
+            </div>
+            <div style="font-size:1.35rem; font-weight:800; color:#000000; margin-bottom:1.2rem;">
+                {current_q["pregunta"]}
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+        for opt in current_q["opciones"]:
+            if st.button(opt, key=f"opt_{current_q['id']}_{opt}", use_container_width=True):
+                if opt == current_q["respuesta"]:
+                    if current_q["id"] not in st.session_state.answered_ids:
+                        st.session_state.answered_ids.add(current_q["id"])
+                        st.session_state.score += 10
+                    st.session_state.last_feedback = ("success", f"Correct! {current_q['explicacion']}")
+                else:
+                    st.session_state.last_feedback = ("warning", f"Not quite. {current_q['explicacion']}")
+                st.rerun()
+
+        if st.session_state.last_feedback:
+            ftype, fmsg = st.session_state.last_feedback
+            if ftype == "success":
+                st.success(fmsg)
+            else:
+                st.warning(fmsg)
+
+        if st.button("NEXT QUESTION →", key="next_q_btn"):
+            st.session_state.q_index += 1
+            st.session_state.last_feedback = None
+            st.rerun()
+
+        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ==============================================================================
+# 08 / TAKE ACTION — MULTI-LEVEL SOLUTIONS
+# ==============================================================================
+if tab in ["ALL", "ACTION"]:
+    st.markdown('<div class="section-light">', unsafe_allow_html=True)
+    st.markdown('<div class="eyebrow" style="color:#000000;">08 / TAKE ACTION — MULTI-LEVEL PLAN</div>', unsafe_allow_html=True)
+    st.markdown('<div class="brush-title" style="font-size:2.3rem; color:#000000; margin-bottom:1.2rem;">SMALL HABITS,<br>SHARED IMPACT.</div>', unsafe_allow_html=True)
+
+    a1, a2, a3 = st.columns(3, gap="large")
+    with a1:
+        st.markdown(
+            """
+        <div class="level-card" style="min-height:220px;">
+            <div class="eyebrow" style="color:#000000;">01 / INDIVIDUAL</div>
+            <div style="font-weight:800; font-size:1rem; margin:0.4rem 0; color:#000000;">Daily choices</div>
+            <p style="font-size:0.86rem; line-height:1.6; color:#000000;">
+                • Turn off taps completely after washing hands.<br>
+                • Bring a reusable water bottle and lunch box.<br>
+                • Take only the food you plan to eat.
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    with a2:
+        st.markdown(
+            """
+        <div class="level-card" style="min-height:220px;">
+            <div class="eyebrow" style="color:#000000;">02 / SCHOOL</div>
+            <div style="font-weight:800; font-size:1rem; margin:0.4rem 0; color:#000000;">Campus culture</div>
+            <p style="font-size:0.86rem; line-height:1.6; color:#000000;">
+                • Report dripping taps or leaks immediately.<br>
+                • Plan low-water games for Student & Children's Day.<br>
+                • Separate recyclables and track real observations.
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    with a3:
+        st.markdown(
+            """
+        <div class="level-card" style="min-height:220px;">
+            <div class="eyebrow" style="color:#000000;">03 / COMMUNITY</div>
+            <div style="font-weight:800; font-size:1rem; margin:0.4rem 0; color:#000000;">Irapuato & Guanajuato</div>
+            <p style="font-size:0.86rem; line-height:1.6; color:#000000;">
+                • Visit Irapuato's Eco Centros (check accepted materials first).<br>
+                • Support local repair, reuse, and responsible consumption.
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ==============================================================================
+# 09 & 10 / SOURCES, EVIDENCE & TEAM CREDITS
+# ==============================================================================
+if tab in ["ALL", "SOURCES"]:
+    st.markdown(
+        """
+    <div style="background-color:#FFFFFF; color:#000000; padding:2.4rem 2.5rem 1.2rem 2.5rem; border-radius:22px 22px 0 0;">
+        <div class="eyebrow" style="color:#000000;">09 & 10 / SOURCES, EVIDENCE & CREDITS</div>
+        <div class="brush-title" style="font-size:2.3rem; color:#000000; margin-bottom:0.6rem;">EVIDENCE & TEAM<br>BEHIND CIVIA.</div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('<div style="background-color:#FFFFFF; padding:0.8rem 1.8rem 2.4rem 1.8rem; border-radius:0 0 22px 22px;">', unsafe_allow_html=True)
+    end_1, end_2 = st.columns([1.2, 1], gap="large")
+    with end_1:
+        st.markdown(
+            """
+        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:16px; padding:1.6rem; color:#000000;">
+            <div class="eyebrow" style="color:#000000;">OFFICIAL SOURCES & TRANSPARENCY</div>
+            <p style="font-size:0.88rem; color:#000000; line-height:1.65; margin:0;">
+                • <strong>UN & Global Agencies:</strong> UN SDG 6, UN SDG 12, WHO/UNICEF JMP (2025 update for 2024 data), UNEP Food Waste Index Report (2024 for 2022 data).<br>
+                • <strong>Mexican & Municipal Sources:</strong> Irapuato Municipal Development Plan 2050, Municipality of Irapuato (Eco Centros inauguration, Feb 17, 2025), IPLANEG / official Mexican & Guanajuato government sources.<br><br>
+                <em>Transparency note: Initial school observations are not completed audits or surveys yet.</em>
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+        st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
+        st.video("assets/Presentationofthegroup.mp4")
+        st.video("assets/Aboutus.mp4")
+
+    with end_2:
+        creators_html = "".join(
+            [
+                f'<div class="creator-name">✨ {m}</div>'
+                for m in TEAM_MEMBERS
+            ]
+        )
+        st.markdown(
+            f"""
+        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:16px; padding:1.6rem; color:#000000;">
+            <div class="eyebrow" style="color:#000000;">CREATORS · TEAM CIVIA</div>
+            <div style="margin-top:0.6rem;">
+                {creators_html}
+            </div>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
