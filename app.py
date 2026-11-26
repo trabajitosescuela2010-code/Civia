@@ -297,7 +297,7 @@ TEAM_MEMBERS = [
 ]
 
 # Cambia esta ruta por la de tu imagen (ej. "assets/civia_logo.png")
-TITLE_IMAGE_PATH = "assets/Logocivia.png"
+TITLE_IMAGE_PATH = "Logocivia.png"
 
 # --- BARRA DE NAVEGACIÓN SUPERIOR ---
 st.markdown(
@@ -338,7 +338,7 @@ tab = st.session_state.active_tab
 # 01 / HERO + BANNERS
 # ==============================================================================
 if tab in ["ALL"]:
-    title_img_html = render_img_html(TITLE_IMAGE_PATH, alt="assets/Logocivia.png", circular=True)
+    title_img_html = render_img_html(TITLE_IMAGE_PATH, alt="Logocivia.png", circular=True)
 
     st.markdown(
         f"""
@@ -492,7 +492,7 @@ if tab in ["ALL", "CITY"]:
     c_img, c_txt = st.columns([1, 1.1], gap="large")
     with c_img:
         st.markdown('<div class="photo-frame">', unsafe_allow_html=True)
-        st.image("assets/Irapuatozona.png",use_container_width=True)
+        st.image("Irapuatozona.png",use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown('<p style="font-size:0.78rem; color:#000000; margin-top:0.5rem;">Illustrative water photograph; see municipal sources below for local information.</p>', unsafe_allow_html=True)
 
@@ -1006,8 +1006,8 @@ if tab in ["ALL", "SOURCES"]:
             unsafe_allow_html=True,
         )
         st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
-        st.video("assets/Presentationofthegroup.mp4")
-        st.video("assets/Aboutus.mp4")
+        st.video("Presentationofthegroup.mp4")
+        st.video("Aboutus.mp4")
 
     with end_2:
         creators_html = "".join(
